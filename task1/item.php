@@ -25,7 +25,8 @@
 */
 final class Item 
 {
-public $id_object;
+static $flag = false;
+
 private $id;
 private $name; 
 private $status; 
@@ -37,14 +38,12 @@ private $changed;
 * @param string $id_object Значение для установки в {@link $$id_object}
 * @return void
 */
-function __construct($id_object)
+function __construct($id)
 {
-  $this->id_object = $id_object;
   $this->id = (int) $this->id;
   $this->name = (string) $this->name;
   $this->status = (int) $this->status;
   $this->changed = (bool) $this->changed;
-
 }
 
 /**
@@ -56,6 +55,8 @@ public function __get($property)
 {
   if (property_exists($this, $property)) {
     return $this->$property;
+  } else {
+    throw new Exception('Свойства не сущесвтует.');
   }
 }
 
@@ -63,30 +64,43 @@ public function __get($property)
 * Магический метод __set
 * @param string $property Первый параметр метода
 * @param string $value Второй параметр метода
-* @return bool
+* @return void or exception  
 */
 public function __set($property, $value)
 {
-  if (property_exists($this, $property) && !empty($value)) {
-    switch($property) {
-      case "id":
-        return false;
-        break;
-      case "name":
-        $value = (string) $value;
-        break;
-      case "status":
-        $value = (int) $value;
-        break;
-      case "changed":
-        $value = (bool) $value;
-        break;
+  if (property_exists($this, $property)) {
+    if($value === "") {
+      throw new Exception('Свойство не должно иметь пустое значение.');
+    } else {
+      switch($property) {
+        case "id":
+          throw new Exception('Свойство id закрыто для записи.');
+          break;
+        case "name":
+          if(is_string($value)) {
+            $this->$property = $value;
+          } else {
+            throw new Exception('Свойство должно быть типа string.');
+          }
+          break;
+        case "status":
+          if(is_int($value)) {
+            $this->$property = $value;
+          } else {
+            throw new Exception('Свойство должно быть типа int.');
+          }
+          break;
+        case "changed":
+          if(is_bool($value)) {
+            $this->$property = $value;
+          } else {
+            throw new Exception('Свойство должно быть типа bool.');
+          }
+          break;
+      }
     }
-
-    $this->$property = $value;
-    return true;
   } 
-  return false;
+
 }
 
 /**
@@ -114,15 +128,14 @@ public function save($name, $status)
 */
 private function init($name, $status)
 {
-  static $count = 0;
-  if($count !== 0) return false;
+  if(self::$flag === true) return false;
 
   $this->name = $name;
   $this->status = $status;
 
-  $count++;
+  self::$flag = true;
+
   return true;
 }
 }
-
 ?>
